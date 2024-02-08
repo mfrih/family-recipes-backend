@@ -53,7 +53,7 @@ router.post("/login", async (req, res, next) => {
     //find the user by their email
     const currentUser = await User.findOne({ email }).select("email password");
     if (!currentUser) {
-      return res.status(400).json({ message: "This user does not exist" });
+      return res.status(401).json({ message: "This user does not exist" });
     }
     // check if the password matches the one in the DB
     const matchingPassword = await bcrypt.compare(
@@ -61,10 +61,11 @@ router.post("/login", async (req, res, next) => {
       currentUser.password
     );
     if (!matchingPassword) {
-      return res.status(400).json({ message: "Wrong credentials" });
+      return res.status(401).json({ message: "Wrong credentials" });
     }
     // generate auth token
     const token = jwt.sign({ _id: currentUser._id }, process.env.TOKEN_SECRET, {
+      expiresIn: "30d",
       algorithm: "HS256",
     });
     res.status(202).json({ authToken: token });
