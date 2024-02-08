@@ -20,13 +20,13 @@ async function isAuthenticated(req, res, next) {
     });
 
     // find the corresponding user in the DB
-    const user = await User.findById(payload._id);
-    if (!user) {
+    const authenticatedUser = await User.findById(payload._id);
+    if (!authenticatedUser) {
       return res.status(401).json({ message: "Denied!" });
     }
 
     // attaches the user object to the request (req.user)
-    req.user = user;
+    req.user = authenticatedUser;
 
     // calls next to pass control to the next middleware or route handler
     next();

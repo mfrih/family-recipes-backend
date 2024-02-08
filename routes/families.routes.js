@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Family = require("../models/Family.model");
+const isAuthenticated = require("../config/isAuthenticated");
 
 // ! ALL ROUTES ARE PREFIXED BY /api/families
 
@@ -23,28 +24,35 @@ router.get("/:familyId/users", async (req, res, next) => {
 
 // POST to create a family
 
-// router.post("/", async (req, res, next) => {
-//   try {
-//     const { name, members, avatar } = req.body;
-//     //check if name is empty
-//     if (!name) {
-//       return res.status(400).json({ message: "The name field is mandatory" });
-//     }
-// checks if the name already exists
-// const existingFamily = await Family.findOne({name : name})
-// if (existingFamily) {
-//     return res.status(400).json({message: "This family name already exists"})
-// }
-//     const createdFamily = await Family.create({
-//       name,
-//       members,
-//       avatar,
-//     });
-//     return res.status(201).json(createdFamily);
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+router.post("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const { name, members, avatar } = req.body;
+    const userId = req.user._id;
+    // console.log(`-----------------req.user-------- ${req.user}`);
+
+    //check if name is empty
+    if (!name) {
+      return res.status(400).json({ message: "The name field is mandatory" });
+    }
+    // checks if the name already exists
+
+    // !!!!!!!! REVOIR CE CODE PARCE QU'IL FAUT QU'IL VERIFIE QUE LE NOM N'EXISTE PAS AU SEIN DES FAMILLES DU USERS
+    // const existingFamily = await Family.findOne({name : name})
+    // if (existingFamily) {
+    //     return res.status(400).json({message: "This family name already exists"})
+    // }
+    const createdFamily = await Family.create({
+      name,
+      creatorId: userId,
+      members: [...members, userId],
+      admins: [userId],
+      avatar,
+    });
+    return res.status(201).json(createdFamily);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // PUT to add users to a family
 
