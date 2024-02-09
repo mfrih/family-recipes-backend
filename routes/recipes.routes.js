@@ -57,7 +57,39 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 
 // GET all recipes belonging to a specific family
 
+router.get("/:familyId", async (req, res, next) => {
+  try {
+    const { familyId } = req.params;
+    const allRecipes = await Recipe.find({ familyId: familyId });
+    if (!allRecipes) {
+      return res.status(404).json({ message: "Couldn't find any recipes" });
+    }
+    res.status(200).json(allRecipes);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // PUT modify recipe (by its creator)
+router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { recipeId } = req.params;
+    const { userId } = req.user;
+    const { updatedFields } = req.body;
+
+    const updatedRecipe = await Recipe.findOneAndUpdate(
+      { _id: recipeId, creatorId: { $in: userId } },
+      { updatedFields },
+      { new: true }
+    );
+    if (!updatedRecipe) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+    return res.status(202).json(updatedRecipe);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // DELETE recipe (by its creator)
 

@@ -67,8 +67,8 @@ router.put("/:familyId/users/add", isAuthenticated, async (req, res, next) => {
   try {
     const { familyId } = req.params;
 
-    //get the userId from the req.body we're sending
-    const { userId } = req.body;
+    //get the userId from the req.user we're sending
+    const { userId } = req.user;
     // const userIdValue = req.body.userId
     // console.log("==============================");
     // console.log(req.body);
@@ -108,7 +108,7 @@ router.put(
   async (req, res, next) => {
     try {
       const { familyId } = req.params;
-      const { userId } = req.body;
+      const { userId } = req.user;
 
       // checks if userId is empty
       if (!userId) {
