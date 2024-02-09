@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Family = require("../models/Family.model");
 const isAuthenticated = require("../config/isAuthenticated");
+// const { updateSearchIndex } = require("../models/User.model"); Pourquoi ce truc a-t-il été rajouté automatiquement ?
 
 // ! ALL ROUTES ARE PREFIXED BY /api/families
 
@@ -26,7 +27,7 @@ router.get("/:familyId/users", async (req, res, next) => {
 
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
-    const { name, members, avatar } = req.body;
+    const { name, avatar } = req.body;
     const userId = req.user._id;
     // console.log(`-----------------req.user-------- ${req.user}`);
 
@@ -34,17 +35,24 @@ router.post("/", isAuthenticated, async (req, res, next) => {
     if (!name) {
       return res.status(400).json({ message: "The name field is mandatory" });
     }
-    // checks if the name already exists
 
-    // !!!!!!!! REVOIR CE CODE PARCE QU'IL FAUT QU'IL VERIFIE QUE LE NOM N'EXISTE PAS AU SEIN DES FAMILLES DU USERS
-    // const existingFamily = await Family.findOne({name : name})
-    // if (existingFamily) {
-    //     return res.status(400).json({message: "This family name already exists"})
-    // }
+    // checks if the name already exists within the families the user is a member of
+
+    const existingFamily = await Family.findOne({
+      name: name,
+      members: { $in: [req.user._id] },
+    });
+    if (existingFamily) {
+      return res
+        .status(400)
+        .json({ message: "This family name already exists" });
+    }
+
+    // create family
     const createdFamily = await Family.create({
       name,
       creatorId: userId,
-      members: [...members, userId],
+      members: [userId],
       admins: [userId],
       avatar,
     });
@@ -55,7 +63,74 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 });
 
 // PUT to add users to a family
+router.put("/:familyId/users/add", isAuthenticated, async (req, res, next) => {
+  try {
+    const { familyId } = req.params;
+
+    //get the userId from the req.body we're sending
+    const { userId } = req.body;
+    // const userIdValue = req.body.userId
+    // console.log("==============================");
+    // console.log(req.body);
+
+    // checks if userId is empty
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ message: "there is no user to add to the family" });
+    }
+
+    //add userIds to the family's members array
+    // finds the family to update and checks if the authenticated user is an admin of the family
+    // pushes the added user to the members array
+
+    // !!!!! ATTENTION A BIEN TESTER QUE LE MÊME UTILISATEUR N'EST PAS POUSSÉ 2 FOIS !!!!!! //
+    const updatedfamily = await Family.findOneAndUpdate(
+      { _id: familyId, admins: { $in: [req.user._id] } },
+      { $push: { members: userId } },
+      { new: true }
+    );
+
+    if (!updatedfamily) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    return res.status(202).json(updatedfamily);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // PUT to delete users from a family
+router.put(
+  "/:familyId/users/remove",
+  isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const { familyId } = req.params;
+      const { userId } = req.body;
+
+      // checks if userId is empty
+      if (!userId) {
+        return res
+          .status(400)
+          .json({ message: "there is no user to add to the family" });
+      }
+      const updatedfamily = await Family.findOneAndUpdate(
+        { _id: familyId, admins: { $in: [req.user._id] } },
+        { $pull: { members: userId } },
+        { new: true }
+      );
+
+      if (!updatedfamily) {
+        return res.status(400).json({ message: "Invalid request" });
+      }
+
+      return res.status(202).json(updatedfamily);
+    } catch (error) {
+      error(next);
+    }
+  }
+);
 
 module.exports = router;
