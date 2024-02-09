@@ -92,5 +92,18 @@ router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
 });
 
 // DELETE recipe (by its creator)
+router.delete("/:recipeId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { recipeId } = req.params;
+    const { userId } = req.user;
+    await Recipe.findOneAndDelete({
+      _id: recipeId,
+      creatorId: { $in: userId },
+    });
+    res.sendStatus(204);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
