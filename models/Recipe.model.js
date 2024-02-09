@@ -27,6 +27,7 @@ const recipeSchema = new Schema(
     familyId: {
       type: ObjectId,
       ref: "Family",
+      required: [true, "Family ID is required."],
     },
     isSignatureRecipe: {
       type: Boolean,
