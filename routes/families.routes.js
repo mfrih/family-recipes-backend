@@ -67,14 +67,14 @@ router.put("/:familyId/users/add", isAuthenticated, async (req, res, next) => {
   try {
     const { familyId } = req.params;
 
-    //get the userId from the req.user we're sending
-    const { userId } = req.user;
+    //get the userId from the req.body we're sending
+    const { addedUserId } = req.body;
     // const userIdValue = req.body.userId
     // console.log("==============================");
     // console.log(req.body);
 
     // checks if userId is empty
-    if (!userId) {
+    if (!addedUserId) {
       return res
         .status(400)
         .json({ message: "there is no user to add to the family" });
@@ -83,11 +83,10 @@ router.put("/:familyId/users/add", isAuthenticated, async (req, res, next) => {
     //add userIds to the family's members array
     // finds the family to update and checks if the authenticated user is an admin of the family
     // pushes the added user to the members array
-
     // !!!!! ATTENTION A BIEN TESTER QUE LE MÊME UTILISATEUR N'EST PAS POUSSÉ 2 FOIS !!!!!! //
     const updatedfamily = await Family.findOneAndUpdate(
       { _id: familyId, admins: { $in: [req.user._id] } },
-      { $push: { members: userId } },
+      { $push: { members: addedUserId } },
       { new: true }
     );
 
@@ -108,8 +107,6 @@ router.put(
   async (req, res, next) => {
     try {
       const { familyId } = req.params;
-      const { userId } = req.user;
-
       // checks if userId is empty
       if (!userId) {
         return res

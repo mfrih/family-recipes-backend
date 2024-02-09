@@ -74,12 +74,25 @@ router.get("/:familyId", async (req, res, next) => {
 router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
     const { recipeId } = req.params;
-    const { userId } = req.user;
-    const { updatedFields } = req.body;
+    const {
+      name,
+      servings,
+      ingredients,
+      instructions,
+      isSignatureRecipe,
+      isSecret,
+    } = req.body;
 
     const updatedRecipe = await Recipe.findOneAndUpdate(
-      { _id: recipeId, creatorId: { $in: userId } },
-      { updatedFields },
+      { _id: recipeId, creatorId: req.user._id },
+      {
+        name,
+        servings,
+        ingredients,
+        instructions,
+        isSignatureRecipe,
+        isSecret,
+      },
       { new: true }
     );
     if (!updatedRecipe) {
@@ -95,10 +108,9 @@ router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
 router.delete("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
     const { recipeId } = req.params;
-    const { userId } = req.user;
     await Recipe.findOneAndDelete({
       _id: recipeId,
-      creatorId: { $in: userId },
+      creatorId: req.user._id,
     });
     res.sendStatus(204);
   } catch (error) {

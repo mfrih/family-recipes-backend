@@ -24,11 +24,12 @@ const recipeSchema = new Schema(
       required: [true, "Creator ID is required."],
       ref: "User",
     },
-    familyId: {
-      type: ObjectId,
-      ref: "Family",
-      required: [true, "Family ID is required."],
-    },
+    familyId: [
+      {
+        type: ObjectId,
+        ref: "Family",
+      },
+    ],
     isSignatureRecipe: {
       type: Boolean,
       default: false,
