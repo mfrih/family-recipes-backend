@@ -6,11 +6,25 @@ const isAuthenticated = require("../config/isAuthenticated");
 
 // ! ALL ROUTES ARE PREFIXED BY /api/families
 
-//GET all families where a user is a creator or a member
+//GET all families where a user is a member
+router.get("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const allFamilies = await Family.find({ members: { $in: [req.user._id] } });
+    if (!allFamilies) {
+      //! j'ai pas forcément envie de renvoyer une 404, je veux juste avoir l'info //
+      return res
+        .status(404)
+        .json({ message: "The user doesn't belong to any family" });
+    }
+    res.status(200).json(allFamilies);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET one family and populate it with its members
 
-router.get("/:familyId/users", async (req, res, next) => {
+router.get("/:familyId/members", isAuthenticated, async (req, res, next) => {
   try {
     const { familyId } = req.params;
     const searchedFamily = await Family.findById(familyId).populate("members");
@@ -63,59 +77,64 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 });
 
 // PUT to add users to a family
-router.put("/:familyId/users/add", isAuthenticated, async (req, res, next) => {
-  try {
-    const { familyId } = req.params;
-
-    //get the userId from the req.body we're sending
-    const { addedUserId } = req.body;
-    // const userIdValue = req.body.userId
-    // console.log("==============================");
-    // console.log(req.body);
-
-    // checks if userId is empty
-    if (!addedUserId) {
-      return res
-        .status(400)
-        .json({ message: "there is no user to add to the family" });
-    }
-
-    //add userIds to the family's members array
-    // finds the family to update and checks if the authenticated user is an admin of the family
-    // pushes the added user to the members array
-    // !!!!! ATTENTION A BIEN TESTER QUE LE MÊME UTILISATEUR N'EST PAS POUSSÉ 2 FOIS !!!!!! //
-    const updatedfamily = await Family.findOneAndUpdate(
-      { _id: familyId, admins: { $in: [req.user._id] } },
-      { $push: { members: addedUserId } },
-      { new: true }
-    );
-
-    if (!updatedfamily) {
-      return res.status(400).json({ message: "Invalid request" });
-    }
-
-    return res.status(202).json(updatedfamily);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// PUT to delete users from a family
 router.put(
-  "/:familyId/users/remove",
+  "/:familyId/members/add",
   isAuthenticated,
   async (req, res, next) => {
     try {
       const { familyId } = req.params;
+
+      //get the userId to be added from the req.body we're sending
+      const { addedUserId } = req.body;
+      // const userIdValue = req.body.userId
+      // console.log("==============================");
+      // console.log(req.body);
+
       // checks if userId is empty
-      if (!userId) {
+      if (!addedUserId) {
         return res
           .status(400)
           .json({ message: "there is no user to add to the family" });
       }
+
+      //add userIds to the family's members array
+      // finds the family to update and checks if the authenticated user is an admin of the family
+      // pushes the added user to the members array
       const updatedfamily = await Family.findOneAndUpdate(
         { _id: familyId, admins: { $in: [req.user._id] } },
-        { $pull: { members: userId } },
+        { $addToSet: { members: addedUserId } },
+        { new: true }
+      );
+
+      if (!updatedfamily) {
+        return res.status(400).json({ message: "Invalid request" });
+      }
+
+      return res.status(202).json(updatedfamily);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PUT to delete users from a family
+router.put(
+  "/:familyId/members/remove",
+  isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const { familyId } = req.params;
+      //get the userId to be removed from the req.body we're sending
+      const { removedUserId } = req.body;
+      // checks if userId is empty
+      if (!removedUserId) {
+        return res
+          .status(400)
+          .json({ message: "there is no user to remove from the family" });
+      }
+      const updatedfamily = await Family.findOneAndUpdate(
+        { _id: familyId, admins: { $in: [req.user._id] } },
+        { $pull: { members: removedUserIdId } },
         { new: true }
       );
 

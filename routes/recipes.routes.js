@@ -5,7 +5,7 @@ const isAuthenticated = require("../config/isAuthenticated");
 
 // ! ALL ROUTES ARE PREFIXED BY /api/recipes //
 
-// POST add recipe to your family
+// POST add recipe by a user (to 0 --> n families)
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const {
@@ -17,10 +17,11 @@ router.post("/", isAuthenticated, async (req, res, next) => {
       isSecret,
       familyId,
     } = req.body;
+
     const userId = req.user._id;
 
     //checks if name, servings, ingredients, instructions are empty
-    if (!name || !servings || !ingredients || !instructions || !familyId) {
+    if (!name || !servings || !ingredients || !instructions) {
       return res.status(400).json({
         message:
           "Name, servings, ingredients and instructions are mandatory fields",
@@ -31,7 +32,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 
     const existingRecipe = await Recipe.findOne({
       name: name,
-      familyId: familyId,
+      familyId: { $in: familyId },
     });
     if (existingRecipe) {
       return res.status(400).json({
@@ -55,20 +56,24 @@ router.post("/", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// GET all recipes belonging to a specific family
+// GET all mine
 
-router.get("/:familyId", async (req, res, next) => {
-  try {
-    const { familyId } = req.params;
-    const allRecipes = await Recipe.find({ familyId: familyId });
-    if (!allRecipes) {
-      return res.status(404).json({ message: "Couldn't find any recipes" });
-    }
-    res.status(200).json(allRecipes);
-  } catch (error) {
-    next(error);
-  }
-});
+// router.get("/my-recipes")
+
+// GET all recipes belonging to a specific family
+// !!!!!!! A DEPLACER DANS FAMILIES
+// router.get("/:familyId", async (req, res, next) => {
+//   try {
+//     const { familyId } = req.params;
+//     const allRecipes = await Recipe.find({ familyId: familyId });
+//     if (!allRecipes) {
+//       return res.status(404).json({ message: "Couldn't find any recipes" });
+//     }
+//     res.status(200).json(allRecipes);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 // PUT modify recipe (by its creator)
 router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
