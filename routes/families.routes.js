@@ -2,27 +2,21 @@ const express = require("express");
 const router = express.Router();
 const Family = require("../models/Family.model");
 const isAuthenticated = require("../config/isAuthenticated");
-// const { updateSearchIndex } = require("../models/User.model"); Pourquoi ce truc a-t-il été rajouté automatiquement ?
+// ? const { updateSearchIndex } = require("../models/User.model"); Pourquoi ce truc a-t-il été rajouté automatiquement ?
 
-// ! ALL ROUTES ARE PREFIXED BY /api/families
+//  ALL ROUTES ARE PREFIXED BY /api/families
 
-//GET all families where a user is a member
-router.get("/", isAuthenticated, async (req, res, next) => {
+//* GET all families where a user is a member
+router.get("/my-families", isAuthenticated, async (req, res, next) => {
   try {
     const allFamilies = await Family.find({ members: { $in: [req.user._id] } });
-    if (!allFamilies) {
-      //! j'ai pas forcément envie de renvoyer une 404, je veux juste avoir l'info //
-      return res
-        .status(404)
-        .json({ message: "The user doesn't belong to any family" });
-    }
     res.status(200).json(allFamilies);
   } catch (error) {
     next(error);
   }
 });
 
-// GET one family and populate it with its members
+//* GET one family and populate it with its members
 
 router.get("/:familyId/members", isAuthenticated, async (req, res, next) => {
   try {
@@ -37,7 +31,7 @@ router.get("/:familyId/members", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// POST to create a family
+//* POST for a user to create a family
 
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
@@ -76,7 +70,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// PUT to add users to a family
+//* PUT to add members to a family
 router.put(
   "/:familyId/members/add",
   isAuthenticated,
@@ -86,9 +80,6 @@ router.put(
 
       //get the userId to be added from the req.body we're sending
       const { addedUserId } = req.body;
-      // const userIdValue = req.body.userId
-      // console.log("==============================");
-      // console.log(req.body);
 
       // checks if userId is empty
       if (!addedUserId) {
@@ -117,7 +108,7 @@ router.put(
   }
 );
 
-// PUT to delete users from a family
+//* PUT to remove members from a family
 router.put(
   "/:familyId/members/remove",
   isAuthenticated,
@@ -148,5 +139,22 @@ router.put(
     }
   }
 );
+
+//* GET all recipes belonging to a specific family
+
+router.get("/:familyId/recipes", isAuthenticated, async (req, res, next) => {
+  try {
+    const { familyId } = req.params;
+    const allRecipes = await Recipe.find({ familyId: familyId });
+    // todo Vérifier avec Florian cette histoire de !allRecipes is a truthy value can Mongoose retourne un array vide /
+    // todo et que donc la condition ne se réalisera jamais à moins de spécifier (allRecipes.length === 0)
+    if (!allRecipes) {
+      return res.status(404).json({ message: "Couldn't find any recipes" });
+    }
+    res.status(200).json(allRecipes);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

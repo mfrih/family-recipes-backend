@@ -3,9 +3,9 @@ const router = express.Router();
 const Recipe = require("../models/Recipe.model");
 const isAuthenticated = require("../config/isAuthenticated");
 
-// ! ALL ROUTES ARE PREFIXED BY /api/recipes //
+// ALL ROUTES ARE PREFIXED BY /api/recipes //
 
-// POST add recipe by a user (to 0 --> n families)
+// * POST add recipe by a user (to 0 --> n families)
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const {
@@ -56,26 +56,19 @@ router.post("/", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// GET all mine
+// * GET all recipes I created
+router.get("/my-recipes", isAuthenticated, async (req, res, next) => {
+  try {
+    const allMyRecipes = await Recipe.findOne({
+      creatorId: { $in: req.user._id },
+    });
+    res.status(200).json(allMyRecipes);
+  } catch (error) {
+    next(error);
+  }
+});
 
-// router.get("/my-recipes")
-
-// GET all recipes belonging to a specific family
-// !!!!!!! A DEPLACER DANS FAMILIES
-// router.get("/:familyId", async (req, res, next) => {
-//   try {
-//     const { familyId } = req.params;
-//     const allRecipes = await Recipe.find({ familyId: familyId });
-//     if (!allRecipes) {
-//       return res.status(404).json({ message: "Couldn't find any recipes" });
-//     }
-//     res.status(200).json(allRecipes);
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
-// PUT modify recipe (by its creator)
+// * PUT modify recipe (by its creator)
 router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
     const { recipeId } = req.params;
@@ -109,7 +102,7 @@ router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// DELETE recipe (by its creator)
+// * DELETE recipe (by its creator)
 router.delete("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
     const { recipeId } = req.params;
