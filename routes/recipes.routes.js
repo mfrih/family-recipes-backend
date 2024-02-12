@@ -60,7 +60,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 router.get("/my-recipes", isAuthenticated, async (req, res, next) => {
   try {
     const allMyRecipes = await Recipe.find({
-      creatorId: { $in: req.user._id },
+      creatorId: req.user._id,
     });
     res.status(200).json(allMyRecipes);
   } catch (error) {
