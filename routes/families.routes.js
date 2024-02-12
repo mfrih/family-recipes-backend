@@ -16,6 +16,21 @@ router.get("/my-families", isAuthenticated, async (req, res, next) => {
   }
 });
 
+//* GET one family by its Id
+
+router.get("/:familyId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { familyId } = req.params;
+    const family = await Family.findById(familyId);
+    res.status(200).json(family);
+    if (!family) {
+      return res.status(404).json({ message: "Couldn't find family" });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 //* GET one family and populate it with its members
 
 router.get("/:familyId/members", isAuthenticated, async (req, res, next) => {
