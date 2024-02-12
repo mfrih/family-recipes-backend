@@ -31,7 +31,7 @@ router.get("/:familyId/members", isAuthenticated, async (req, res, next) => {
   }
 });
 
-//* POST for a user to create a family
+//* POST to create a family
 
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
