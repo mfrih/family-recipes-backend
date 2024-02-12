@@ -140,7 +140,7 @@ router.put(
       }
       const updatedfamily = await Family.findOneAndUpdate(
         { _id: familyId, admins: { $in: [req.user._id] } },
-        { $pull: { members: removedUserIdId } },
+        { $pull: { members: removedUserId } },
         { new: true }
       );
 
