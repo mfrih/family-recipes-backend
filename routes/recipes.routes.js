@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Recipe = require("../models/Recipe.model");
+const Family = require("../models/Family.model");
 const isAuthenticated = require("../config/isAuthenticated");
 
 // ! ALL ROUTES ARE PREFIXED BY /api/recipes //
@@ -125,6 +126,33 @@ router.delete("/:recipeId", isAuthenticated, async (req, res, next) => {
       creatorId: req.user._id,
     });
     res.sendStatus(204);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// * SEARCH recipes by name or ingredients
+router.get("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const { searchQuery } = req.query;
+    const userId = req.user._id;
+    const userFamilies = await Family.find({
+      members: { $in: [req.user._id] },
+    });
+    const userFamilyIds = userFamilies.map((userFamily) => userFamily._id);
+    const recipes = await Recipe.find({
+      $and: [
+        {
+          $or: [
+            { name: new RegExp(searchQuery, "i") },
+            { ingredients: new RegExp(searchQuery, "i") },
+          ],
+        },
+        { $or: [{ creatorId: userId }, { familyId: { $in: userFamilyIds } }] },
+      ],
+    }).populate("creatorId familyId");
+
+    res.status(200).json(recipes);
   } catch (error) {
     next(error);
   }
