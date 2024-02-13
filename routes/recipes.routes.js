@@ -3,7 +3,7 @@ const router = express.Router();
 const Recipe = require("../models/Recipe.model");
 const isAuthenticated = require("../config/isAuthenticated");
 
-// ALL ROUTES ARE PREFIXED BY /api/recipes //
+// ! ALL ROUTES ARE PREFIXED BY /api/recipes //
 
 // * POST add recipe by a user (to 0 --> n families)
 router.post("/", isAuthenticated, async (req, res, next) => {
@@ -63,6 +63,20 @@ router.get("/my-recipes", isAuthenticated, async (req, res, next) => {
       creatorId: req.user._id,
     });
     res.status(200).json(allMyRecipes);
+  } catch (error) {
+    next(error);
+  }
+});
+
+//* GET one recipe by its Id
+router.get("/:recipeId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { recipeId } = req.params;
+    const recipe = await Recipe.findById(recipeId);
+    res.status(200).json(recipe);
+    if (!recipe) {
+      return res.status(404).json({ message: "Couldn't find recipe" });
+    }
   } catch (error) {
     next(error);
   }
