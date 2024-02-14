@@ -69,6 +69,33 @@ router.get("/my-recipes", isAuthenticated, async (req, res, next) => {
   }
 });
 
+// * SEARCH recipes by name or ingredients
+router.get("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const { searchQuery } = req.query;
+    const userId = req.user._id;
+    const userFamilies = await Family.find({
+      members: { $in: [req.user._id] },
+    });
+    const userFamilyIds = userFamilies.map((userFamily) => userFamily._id);
+    const recipes = await Recipe.find({
+      $and: [
+        {
+          $or: [
+            { name: new RegExp(searchQuery, "i") },
+            { ingredients: new RegExp(searchQuery, "i") },
+          ],
+        },
+        { $or: [{ creatorId: userId }, { familyId: { $in: userFamilyIds } }] },
+      ],
+    }).populate("creatorId familyId");
+
+    res.status(200).json(recipes);
+  } catch (error) {
+    next(error);
+  }
+});
+
 //* GET one recipe by its Id
 router.get("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
@@ -92,6 +119,7 @@ router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
       servings,
       ingredients,
       instructions,
+      familyId,
       isSignatureRecipe,
       isSecret,
     } = req.body;
@@ -103,6 +131,7 @@ router.put("/:recipeId", isAuthenticated, async (req, res, next) => {
         servings,
         ingredients,
         instructions,
+        familyId,
         isSignatureRecipe,
         isSecret,
       },
@@ -126,33 +155,6 @@ router.delete("/:recipeId", isAuthenticated, async (req, res, next) => {
       creatorId: req.user._id,
     });
     res.sendStatus(204);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// * SEARCH recipes by name or ingredients
-router.get("/", isAuthenticated, async (req, res, next) => {
-  try {
-    const { searchQuery } = req.query;
-    const userId = req.user._id;
-    const userFamilies = await Family.find({
-      members: { $in: [req.user._id] },
-    });
-    const userFamilyIds = userFamilies.map((userFamily) => userFamily._id);
-    const recipes = await Recipe.find({
-      $and: [
-        {
-          $or: [
-            { name: new RegExp(searchQuery, "i") },
-            { ingredients: new RegExp(searchQuery, "i") },
-          ],
-        },
-        { $or: [{ creatorId: userId }, { familyId: { $in: userFamilyIds } }] },
-      ],
-    }).populate("creatorId familyId");
-
-    res.status(200).json(recipes);
   } catch (error) {
     next(error);
   }
