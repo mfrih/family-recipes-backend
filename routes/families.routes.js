@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Family = require("../models/Family.model");
+const Recipe = require("../models/Recipe.model");
 const isAuthenticated = require("../config/isAuthenticated");
 // ? const { updateSearchIndex } = require("../models/User.model"); Pourquoi ce truc a-t-il été rajouté automatiquement ?
 
@@ -161,8 +162,6 @@ router.get("/:familyId/recipes", isAuthenticated, async (req, res, next) => {
   try {
     const { familyId } = req.params;
     const allRecipes = await Recipe.find({ familyId: familyId });
-    // todo Vérifier avec Florian cette histoire de !allRecipes is a truthy value can Mongoose retourne un array vide /
-    // todo et que donc la condition ne se réalisera jamais à moins de spécifier (allRecipes.length === 0)
     if (!allRecipes) {
       return res.status(404).json({ message: "Couldn't find any recipes" });
     }
