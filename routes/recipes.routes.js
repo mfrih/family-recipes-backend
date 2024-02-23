@@ -62,7 +62,7 @@ router.get("/my-recipes", isAuthenticated, async (req, res, next) => {
   try {
     const allMyRecipes = await Recipe.find({
       creatorId: req.user._id,
-    });
+    }).populate("creatorId");
     res.status(200).json(allMyRecipes);
   } catch (error) {
     next(error);
@@ -100,7 +100,7 @@ router.get("/", isAuthenticated, async (req, res, next) => {
 router.get("/:recipeId", isAuthenticated, async (req, res, next) => {
   try {
     const { recipeId } = req.params;
-    const recipe = await Recipe.findById(recipeId);
+    const recipe = await Recipe.findById(recipeId).populate("creatorId");
     res.status(200).json(recipe);
     if (!recipe) {
       return res.status(404).json({ message: "Couldn't find recipe" });

@@ -5,9 +5,10 @@ const Recipe = require("../models/Recipe.model");
 const isAuthenticated = require("../config/isAuthenticated");
 // ? const { updateSearchIndex } = require("../models/User.model"); Pourquoi ce truc a-t-il été rajouté automatiquement ?
 
-//  ALL ROUTES ARE PREFIXED BY /api/families
+// ! ALL ROUTES ARE PREFIXED BY /api/families
 
 //* GET all families where a user is a member
+
 router.get("/my-families", isAuthenticated, async (req, res, next) => {
   try {
     const allFamilies = await Family.find({ members: { $in: [req.user._id] } });
@@ -87,6 +88,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 });
 
 //* PUT to add members to a family
+
 router.put(
   "/:familyId/members/add",
   isAuthenticated,
@@ -125,6 +127,7 @@ router.put(
 );
 
 //* PUT to remove members from a family
+
 router.put(
   "/:familyId/members/remove",
   isAuthenticated,
@@ -161,7 +164,9 @@ router.put(
 router.get("/:familyId/recipes", isAuthenticated, async (req, res, next) => {
   try {
     const { familyId } = req.params;
-    const allRecipes = await Recipe.find({ familyId: familyId });
+    const allRecipes = await Recipe.find({ familyId: familyId }).populate(
+      "creatorId"
+    );
     if (!allRecipes) {
       return res.status(404).json({ message: "Couldn't find any recipes" });
     }
